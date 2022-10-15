@@ -1,0 +1,8 @@
+{
+  "name": "@iksaku/laravel-vite-router",
+  "version": "0.1.0",
+  "description": "Generate Laravel routes with Vite environments",
+  "main": "src/index.js",
+  "author": "Jorge González",
+  "license": "MIT"
+}
