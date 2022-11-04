@@ -1,8 +1,37 @@
 {
   "name": "@iksaku/laravel-vite-router",
   "version": "0.1.0",
-  "description": "Generate Laravel routes with Vite environments",
-  "main": "src/index.js",
+  "description": "Generate Laravel routes for Vite environments",
+  "keywords": [
+    "laravel",
+    "inertia",
+    "inertiajs",
+    "vite",
+    "router"
+  ],
+  "homepage": "https://github.com/iksaku/laravel-vite-router",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iksaku/laravel-vite-router"
+  },
   "author": "Jorge González",
-  "license": "MIT"
+  "license": "MIT",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "yarn build:cjs && yarn build:esm && cp ./src/shims.d.ts ./dist/index.d.ts",
+    "build:cjs": "esbuild ./src/index.ts --bundle --outfile=dist/index.cjs --format=cjs --platform=node --external:vite",
+    "build:esm": "esbuild ./src/index.ts --bundle --outfile=dist/index.mjs --format=esm --platform=node --external:vite"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.9",
+    "esbuild": "^0.15.13"
+  },
+  "peerDependencies": {
+    "vite": "^3.2.2"
+  }
 }

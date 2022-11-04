@@ -1,8 +1,13 @@
-const process = require('process')
-const { compileRoutes } = require('./route_loader.js')
-const {normalizePath} = require("vite");
+import { normalizePath } from 'vite'
+import type { Plugin } from 'vite'
+import { compileModule } from './compiler'
 
-module.exports = (config = {}) => {
+type Config = {
+    only?: string[]
+    except?: string[]
+}
+
+export default (config: Config = {}): Plugin => {
     const id = 'virtual:laravel/routes'
     const resolvedId = '\0' + id
 
@@ -14,9 +19,6 @@ module.exports = (config = {}) => {
             'ignition.*',
             ...(config.except ?? [])
         ],
-        groups: {
-            ...(config.groups ?? {})
-        }
     }
 
     return {
@@ -28,17 +30,7 @@ module.exports = (config = {}) => {
         },
         async load(id) {
             if (id === resolvedId) {
-                const { default: ungrouped, ...groups } = await compileRoutes(options)
-
-                let module = ''
-
-                for (const [name, path] of Object.entries(groups)) {
-                    module += `export const ${name} = ${JSON.stringify(path)}\n`
-                }
-
-                module += `export default ${JSON.stringify(ungrouped)}`
-
-                return module
+                return await compileModule(options)
             }
         },
         configureServer(server) {
