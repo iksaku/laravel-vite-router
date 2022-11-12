@@ -1,6 +1,10 @@
-declare const route: (name: string, params?: Record<string, any>) => string;
+/// <reference path="./routes.d.ts" />
 
-declare module "virtual:laravel/routes" {}
+import type { Routes } from 'virtual:laravel/routes'
+
+declare global {
+    const route: <RouteName extends keyof Routes>(name: RouteName, params?: Routes[RouteName]) => string
+}
 
 declare module "@iksaku/laravel-vite-router" {
     import { Plugin } from 'vite'
