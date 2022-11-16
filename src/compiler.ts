@@ -4,9 +4,10 @@ import { readFile, writeFile } from 'fs/promises'
 
 const exec = promisify(exec_sync)
 
-type RouteEntries = [string, string][]
+type RouteEntry = [string, string]
+type RouteEntries = RouteEntry[]
 
-async function fetchRoutes(): Promise<Map<string, string>> {
+async function fetchRoutes(): Promise<RouteEntries> {
     const { stdout, stderr } = await exec('php artisan route:list --json')
 
     if (stderr) {
@@ -29,30 +30,28 @@ async function fetchRoutes(): Promise<Map<string, string>> {
         router.set(route.name, `${route.domain}/${route.uri}`)
     }
 
-    return router
+    return [...router]
 }
 
-function filterRoutes(routes, { only, except }): RouteEntries {
-    const compileRouteFilters = filters => filters.map((filter) => {
+function filterRoutes(routes: RouteEntries, { only, except }): RouteEntries {
+    const compileRouteFilters = (filters: string[]): RegExp[] => filters.map((filter) => {
         filter = filter.replaceAll('.', '\\.')
-
-        if (filter.includes('*')) {
-            filter = filter.replace('*', '.*')
-        }
+            .replaceAll('*', '.*')
 
         return new RegExp(`^${filter}$`)
     })
 
-    only = compileRouteFilters(only)
-    except = compileRouteFilters(except)
+    const include = compileRouteFilters(only)
+    const exclude = compileRouteFilters(except)
+    const predicate = ([name, path]: RouteEntry) => (filter: RegExp) => filter.test(name) || filter.test(path)
 
-    return [...routes].filter(([name]) => {
-        if (only.length && ! only.some((filter) => filter.test(name))) {
-            return false
+    return routes.filter((entry) => {
+        if (include.length) {
+            return include.some(predicate(entry))
         }
 
-        if (except.length && except.some((filter) => filter.test(name))) {
-            return false
+        if (exclude.length) {
+            return ! exclude.some(predicate(entry))
         }
 
         return true
@@ -82,24 +81,10 @@ async function writeRouteDeclarations(routes: RouteEntries): Promise<void> {
         return `'${name}': { ${parameters} }`
     }).join(', ')
 
-    const routeDeclarationsFile = `${process.cwd()}/node_modules/@iksaku/laravel-vite-router/src/index.d.ts`
+    const routeDeclarationsFile = `${process.cwd()}/node_modules/@iksaku/laravel-vite-router/dist/index.d.ts`
 
     const contents = (await readFile(routeDeclarationsFile, { encoding: 'utf-8' }))
         .replace(/(export type Routes).*/, `$1 = { ${declarations} }`)
-
-    // const contents = `
-    //     declare module "virtual:laravel/routes" {
-    //         export type Routes = { ${declarations} }
-    //
-    //         namespace global {
-    //             interface Window {
-    //                 route: <RouteName extends keyof Routes>(name: RouteName, params?: Routes[RouteName]) => string
-    //             }
-    //         }
-    //     }
-    // `
-    //     .replace(/(\n\s{8}|\n\s{4}$)/g, '\n')
-    //     .replace(/^\n/g, '')
 
     await writeFile(routeDeclarationsFile, contents, { encoding: 'utf-8' })
 }
