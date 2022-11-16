@@ -54,14 +54,15 @@ route('users.show', { user: 1 }) // /users/1
 ```
 
 > **Warning**
+> 
 > We do not support passing an array of parameters to the `route()` function yet.
 > If you need this, please open an issue or a PR.
 
 This function plays really well with [InertiaJS](https://inertiajs.com/) as you can use it to generate
 the URLs for your Inertia links:
 
-```sveltehtml
-<script lang="ts">
+```svelte
+<script>
     import { inertia } from '@inertiajs/inertia-svelte'
 
     export let users
@@ -123,3 +124,8 @@ export default defineConfig({
     ]
 })
 ```
+
+> **NOTE**
+> 
+> The `only` and `except` properties are mutually exclusive. If you pass both, only the `only` property
+> will be used.
