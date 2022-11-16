@@ -125,7 +125,7 @@ export default defineConfig({
 })
 ```
 
-> **NOTE**
+> **Note**
 > 
 > The `only` and `except` properties are mutually exclusive. If you pass both, only the `only` property
 > will be used.
