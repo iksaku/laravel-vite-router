@@ -1,6 +1,6 @@
 import { promisify } from 'util'
 import { exec as exec_sync } from 'child_process'
-import { writeFile } from 'fs/promises'
+import { readFile, writeFile } from 'fs/promises'
 
 const exec = promisify(exec_sync)
 
@@ -82,17 +82,26 @@ async function writeRouteDeclarations(routes: RouteEntries): Promise<void> {
         return `'${name}': { ${parameters} }`
     }).join(', ')
 
-    const contents = `
-        declare module "virtual:laravel/routes" {
-            export type Routes = { ${declarations} }
-        }
-    `
-        .replace(/(\n\s{8}|\n\s{4}$)/g, '\n')
-        .replace(/^\n/g, '')
+    const routeDeclarationsFile = `${process.cwd()}/node_modules/@iksaku/laravel-vite-router/src/index.d.ts`
 
-    await writeFile(`${process.cwd()}/node_modules/@iksaku/laravel-vite-router/dist/routes.d.ts`, contents, {
-        encoding: 'utf-8'
-    })
+    const contents = (await readFile(routeDeclarationsFile, { encoding: 'utf-8' }))
+        .replace(/(export type Routes).*/, `$1 = { ${declarations} }`)
+
+    // const contents = `
+    //     declare module "virtual:laravel/routes" {
+    //         export type Routes = { ${declarations} }
+    //
+    //         namespace global {
+    //             interface Window {
+    //                 route: <RouteName extends keyof Routes>(name: RouteName, params?: Routes[RouteName]) => string
+    //             }
+    //         }
+    //     }
+    // `
+    //     .replace(/(\n\s{8}|\n\s{4}$)/g, '\n')
+    //     .replace(/^\n/g, '')
+
+    await writeFile(routeDeclarationsFile, contents, { encoding: 'utf-8' })
 }
 
 function cleanupRoutes(routes: RouteEntries): object {
